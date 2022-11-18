@@ -25,8 +25,15 @@ Text from Camera | Text from Gallery
 <img src="https://github.com/Cburnett-96/Filipino_to_English_Interpreter/blob/master/Screenshoots/Camera.gif?raw=true" alt="drawing" width="320"  /> | <img src="https://github.com/Cburnett-96/Filipino_to_English_Interpreter/blob/master/Screenshoots/Gallery.gif?raw=true" alt="drawing" width="320"/>
 
 
-#### Gradle Used
+### Gradle Used
 
-
+Text from Image/Camera Google API
+```groovy
+implementation 'com.google.android.gms:play-services-mlkit-text-recognition:18.0.2'
+```
+Translator Google API
+```groovy
+implementation 'com.google.mlkit:translate:17.0.1'
+```
 
 ### Getting Started
