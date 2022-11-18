@@ -18,7 +18,11 @@ An android app which will allows you to translate Filipino(Tagalog) to English w
 - CAMERA & WRITE_EXTERNAL_STORAGE Gallery (To used of Text from Image/Camera)
 
 ## Android Screenshots
-
+UI (Light/Dark Mode) | Speech to Text
+:-------------------------:|:-------------------------:
+<img src="https://github.com/Cburnett-96/Filipino_to_English_Interpreter/blob/master/Screenshoots/UI.gif?raw=true" alt="drawing" width="320"  /> | <img src="https://github.com/Cburnett-96/Filipino_to_English_Interpreter/blob/master/Screenshoots/STT.gif?raw=true" alt="drawing" width="320"  />
+Text from Camera | Text from Gallery
+<img src="https://github.com/Cburnett-96/Filipino_to_English_Interpreter/blob/master/Screenshoots/Camera.gif?raw=true" alt="drawing" width="320"  /> | <img src="https://github.com/Cburnett-96/Filipino_to_English_Interpreter/blob/master/Screenshoots/Gallery.gif?raw=true" alt="drawing" width="320"/>
 
 
 #### Gradle Used
