@@ -1,0 +1,47 @@
+{
+  "project_info": {
+    "project_number": "199596169878",
+    "project_id": "orbotz-32460",
+    "storage_bucket": "orbotz-32460.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:199596169878:android:648159a44267f1c3d340b7",
+        "android_client_info": {
+          "package_name": "com.orbotz.filipino_english_interpreter"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "199596169878-mdn8b7ian281oufk7a7mumvo6turcdq8.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.orbotz.filipino_english_interpreter",
+            "certificate_hash": "fbe5b04532b6f90c76a16e6ac172b28dbbe11c3a"
+          }
+        },
+        {
+          "client_id": "199596169878-tm9ptoad4nl06nk3j99map90ffu3t7oo.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCv1_EBxV2gBWC8PtIN_uOI_tlW4qQm79c"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "199596169878-tm9ptoad4nl06nk3j99map90ffu3t7oo.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

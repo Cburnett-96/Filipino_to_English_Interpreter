@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_gravity="bottom"
+    android:orientation="vertical">
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:gravity="center"
+        android:paddingTop="@dimen/_20sdp"
+        android:paddingStart="@dimen/_20sdp"
+        android:paddingEnd="@dimen/_20sdp"
+        android:orientation="vertical">
+        <Button
+            android:id="@+id/btn_Camera"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="@dimen/_10sdp"
+            android:text="Kumuha ng Imahe sa Kamera"
+            android:textColor="@color/white_smoke"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/violet"
+            app:icon="@drawable/ic_camera"
+            app:iconSize="@dimen/_30sdp"
+            app:iconTint="@color/white_smoke"/>
+
+        <Button
+            android:id="@+id/btn_Gallery"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginStart="@dimen/_10sdp"
+            android:layout_marginEnd="@dimen/_10sdp"
+            android:text="Kumuha ng Imahe sa Galerya"
+            android:textColor="@color/white_smoke"
+            android:textStyle="bold"
+            android:textAllCaps="false"
+            app:backgroundTint="@color/violet"
+            app:icon="@drawable/ic_gallery"
+            app:iconSize="@dimen/_30sdp"
+            app:iconTint="@color/white_smoke" />
+    </LinearLayout>
+</LinearLayout>
