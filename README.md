@@ -2,7 +2,7 @@
 Isang android app na magbibigay-daan sa iyo upang isalin ang Filipino(Tagalog) sa Ingles gamit ang materyal na disenyo. [An android app which will allows you to translate Filipino(Tagalog) to English with material design.]
 
 ## ✔ Mga tampok na listahan. [Features List]:
-- May Kakayahang mag-Offline. [Supports Offline Capability (Need internet connection at first launch)]
+- May Kakayahang mag-Offline kapag ginagamit. [Supports Offline Capability (Need internet connection at first launch)]
 - Pagsasalin ng Teksto. [Text Translation (Filipino Text to English Text)]
 - Kakayahan sa pag-input ng boses at maisalin sa teksto. [Supports voice input. [Speech to Text for Filipino language] (Internet Connection Needed)]
 - Kakayahang kumuha ng imahe sa galerya at sa kamera upang maisalin sa teksto. [Support Select Text from Image/Camera (Filipino Text)]
