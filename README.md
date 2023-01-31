@@ -8,8 +8,8 @@ Isang android app na magbibigay-daan sa iyo upang isalin ang Filipino(Tagalog) s
 - Kakayahang kumuha ng imahe sa galerya at sa kamera upang maisalin sa teksto. [Support Select Text from Image/Camera (Filipino & English Text)]
 - Kakayahan maisalin ang teksto sa boses. [Text to Speech (Filipino and English)]
 - Kayang kopyahin ang tekstong nakalagay. [Copy Text (Filipino and English)]
-- May Kakayahang iimbak ang mga tekstong na isalin. [Support History of Translated Text]
-- May Kakayahang ipaborito ang mga tekstong na isalin. [Support Add to Favorites of Translated Text]
+- (Not Working Yet) May Kakayahang iimbak ang mga tekstong na isalin. [Support History of Translated Text]
+- (Not Working Yet) May Kakayahang ipaborito ang mga tekstong na isalin. [Support Add to Favorites of Translated Text]
 - At gamit na materyal na disenyo na galing sa google at may kakayahang baguhin ang tema sa malinaw o madilim. [It also has material design from google and capability of Light & Dark Mode theme.]
 - May kakayahang baguhin ang wika sa Ingles o Filipino. [Can change to filipino or english vice-versa]
 
