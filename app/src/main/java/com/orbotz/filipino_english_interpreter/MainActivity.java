@@ -1,17 +1,18 @@
 package com.orbotz.filipino_english_interpreter;
 
 import android.Manifest;
+import android.annotation.SuppressLint;
 import android.app.Activity;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.ContentValues;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.ApplicationInfo;
 import android.content.pm.PackageManager;
 import android.content.res.ColorStateList;
+import android.content.res.Configuration;
 import android.graphics.drawable.BitmapDrawable;
-import android.graphics.drawable.Drawable;
-import android.graphics.drawable.GradientDrawable;
 import android.net.Uri;
 import android.os.Build;
 import android.os.Bundle;
@@ -43,12 +44,11 @@ import androidx.annotation.Nullable;
 import androidx.annotation.RequiresApi;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.app.AppCompatDelegate;
-import androidx.appcompat.content.res.AppCompatResources;
 import androidx.appcompat.view.menu.MenuBuilder;
 import androidx.core.app.ActivityCompat;
 import androidx.core.content.ContextCompat;
+import androidx.core.content.FileProvider;
 
-import com.google.android.gms.tasks.OnFailureListener;
 import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.android.gms.tasks.Task;
 import com.google.mlkit.common.model.DownloadConditions;
@@ -61,9 +61,17 @@ import com.google.mlkit.vision.text.Text;
 import com.google.mlkit.vision.text.TextRecognition;
 import com.google.mlkit.vision.text.TextRecognizer;
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions;
+import com.orbotz.filipino_english_interpreter.Services.SharedPref;
+import com.orbotz.filipino_english_interpreter.Services.TTS;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Locale;
 import java.util.Objects;
 
 public class MainActivity extends AppCompatActivity {
@@ -73,9 +81,10 @@ public class MainActivity extends AppCompatActivity {
     Handler handler;
     SharedPref prefs;
     TTS tts;
-    LoadingData loadingData;
+    LoadingDataActivity loadingDataActivity;
 
     RelativeLayout relativeLayout;
+    LinearLayout layoutTranslated;
     com.google.android.material.floatingactionbutton.FloatingActionButton
             btnMic, btnSpeaker, btnSpeakerEng, btnCopy, btnCopyEng, btnFavorite, btnPhotoCam, btnEnter;
     EditText editTextInputFilipino;
@@ -91,12 +100,13 @@ public class MainActivity extends AppCompatActivity {
         prefs = new SharedPref(this);
         tts = new TTS(this);
         handler = new Handler();
-        loadingData = new LoadingData(this);
+        loadingDataActivity = new LoadingDataActivity(this);
 
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
         relativeLayout = findViewById(R.id.parentRelative);
+        layoutTranslated = findViewById(R.id.layoutTranslated);
         btnMic = findViewById(R.id.btn_Mic);
         btnSpeaker = findViewById(R.id.btn_Speaker);
         btnSpeakerEng = findViewById(R.id.btn_SpeakerEng);
@@ -115,11 +125,19 @@ public class MainActivity extends AppCompatActivity {
 
         btnSpeaker.setOnClickListener(view -> {
             String text = editTextInputFilipino.getText().toString();
-            tts.TTSFilipino(text);
+            if (prefs.loadLanguageState().equals("fil")) {
+                tts.TTSFilipino(text);
+            } else {
+                tts.TTSEnglish(text);
+            }
         });
         btnSpeakerEng.setOnClickListener(view -> {
             String text = tvTranslatedEng.getText().toString();
-            tts.TTSEnglish(text);
+            if (prefs.loadLanguageState().equals("en")) {
+                tts.TTSFilipino(text);
+            } else {
+                tts.TTSEnglish(text);
+            }
         });
 
         btnCopy.setOnClickListener(view -> {
@@ -139,26 +157,37 @@ public class MainActivity extends AppCompatActivity {
         recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS);
         btnPhotoCam.setOnClickListener(this::showPopupWindow);
 
+        String loading, noInput;
+        if (prefs.loadLanguageState().equals("en")) {
+            loading = "Loading the result...";
+            noInput = "Please Input.";
+        } else {
+            loading = "Naglo-load ang resulta...";
+            noInput = "Maglagay ka nang teksto.";
+        }
+
         btnEnter.setOnClickListener(view -> {
-            String loading = "Naglo-load ang resulta...";
-            String NoInput = "Maglagay ka nang teksto.";
             if (editTextInputFilipino.getText().toString().isEmpty()){
-                tvTranslatedEng.setHint(NoInput);
+                tvTranslatedEng.setHint(noInput);
                 return;
             }
             tvTranslatedEng.setHint(loading);
             String text = editTextInputFilipino.getText().toString();
-            translate_tagalog(text);
+            if (prefs.loadLanguageState().equals("en")) {
+                translate_english(text);
+            } else {
+                translate_tagalog(text);
+            }
         });
     }
 
-    private void Translated(){
-        loadingData.StartLoadingDialog();
+    private void Translated() {
+        loadingDataActivity.StartLoadingDialog();
         TranslatorOptions options = new TranslatorOptions.Builder()
                 .setSourceLanguage(TranslateLanguage.TAGALOG)
                 .setTargetLanguage(TranslateLanguage.ENGLISH)
                 .build();
-        tagalogTranslator= Translation.getClient(options);
+        tagalogTranslator = Translation.getClient(options);
 
         options_2 = new TranslatorOptions.Builder()
                 .setSourceLanguage(TranslateLanguage.ENGLISH)
@@ -171,41 +200,44 @@ public class MainActivity extends AppCompatActivity {
 
         tagalogTranslator.downloadModelIfNeeded(conditions)
                 .addOnSuccessListener(
-                        new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void v) {
-                                // Model downloaded successfully. Okay to start translating.
-                                download_data();
-                            }
+                        v -> {
+                            // Model downloaded successfully. Okay to start translating.
+                            download_data();
                         })
                 .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                // Model couldn’t be downloaded or other internal error.
-                                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                            }
+                        e -> {
+                            // Model couldn’t be downloaded or other internal error.
+                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
     }
 
     private void translate_tagalog(String text) {
         tagalogTranslator.translate(text)
                 .addOnSuccessListener(
-                        new OnSuccessListener<String>() {
-                            @Override
-                            public void onSuccess(@NonNull String translatedText) {
-                                // Translation successful.
-                                tvTranslatedEng.setText(translatedText);
-                                btnFavorite.setVisibility(View.VISIBLE);
-                            }
+                        translatedText -> {
+                            // Translation successful.
+                            tvTranslatedEng.setText(translatedText);
+                            btnFavorite.setVisibility(View.VISIBLE);
                         })
                 .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                // Error.
-                                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
-                            }
+                        e -> {
+                            // Error.
+                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
+                        });
+    }
+
+    private void translate_english(String text) {
+        englishTranslator.translate(text)
+                .addOnSuccessListener(
+                        translatedText -> {
+                            // Translation successful.
+                            tvTranslatedEng.setText(translatedText);
+                            btnFavorite.setVisibility(View.VISIBLE);
+                        })
+                .addOnFailureListener(
+                        e -> {
+                            // Error.
+                            Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_SHORT).show();
                         });
     }
 
@@ -213,22 +245,11 @@ public class MainActivity extends AppCompatActivity {
         englishTranslator = Translation.getClient(options_2);
         englishTranslator.downloadModelIfNeeded()
                 .addOnSuccessListener(
-                        new OnSuccessListener<Void>() {
-                            @Override
-                            public void onSuccess(Void v) {
-                                // Model downloaded successfully. Okay to start translating.
-                                // (Set a flag, unhide the translation UI, etc.)
-                            }
+                        v -> {
                         })
                 .addOnFailureListener(
-                        new OnFailureListener() {
-                            @Override
-                            public void onFailure(@NonNull Exception e) {
-                                // Model couldn’t be downloaded or other internal error.
-                                Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
-                            }
-                        });
-        loadingData.DismissDialog();
+                        e -> Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show());
+        loadingDataActivity.DismissDialog();
     }
 
     private void SetTheme(){
@@ -236,14 +257,15 @@ public class MainActivity extends AppCompatActivity {
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
 
+        ChangeLanguage(prefs.loadLanguageState());
+
         if (prefs.loadNightModeState()) {
             window.setStatusBarColor(ContextCompat.getColor(this, R.color.dark_black));
             window.setNavigationBarColor(ContextCompat.getColor(this, R.color.dark_blue));
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_YES);
             relativeLayout.setBackgroundColor(ContextCompat.getColor(this, R.color.dark_black));
-            Drawable background = AppCompatResources.getDrawable(this, R.drawable.rounded_card);
-            GradientDrawable changeBackground = (GradientDrawable) background;
-            changeBackground.setColor(ContextCompat.getColor(this, R.color.dark_blue));
+            layoutTranslated.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_blue)));
+
             btnSpeakerEng.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_black)));
             btnCopyEng.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_black)));
             btnFavorite.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_black)));
@@ -263,13 +285,10 @@ public class MainActivity extends AppCompatActivity {
             window.setNavigationBarColor(ContextCompat.getColor(this, R.color.white_smoke));
             window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LIGHT_STATUS_BAR);
             AppCompatDelegate.setDefaultNightMode(AppCompatDelegate.MODE_NIGHT_NO);
-            Drawable background = AppCompatResources.getDrawable(this, R.drawable.rounded_card);
-            GradientDrawable changeBackground = (GradientDrawable) background;
-            changeBackground.setColor(ContextCompat.getColor(this, R.color.white_smoke));
         }
     }
 
-    MenuItem itemDark, itemAbout, itemHistory, itemFavorites;
+    MenuItem itemDark, itemAbout, itemHistory, itemFavorites, itemLanguage;
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public boolean onCreateOptionsMenu(Menu menu){
@@ -280,37 +299,74 @@ public class MainActivity extends AppCompatActivity {
             //noinspection RestrictedApi
             m.setOptionalIconsVisible(true);
         }
+        itemLanguage = menu.findItem(R.id.changeLanguage);
         itemDark = menu.findItem(R.id.darkMode);
         itemAbout = menu.findItem(R.id.about);
         itemFavorites = menu.findItem(R.id.favorites);
         itemHistory = menu.findItem(R.id.history);
+
         if(prefs.loadNightModeState()) {
             itemDark.setIcon(ContextCompat.getDrawable(this, R.drawable.ic_light));
-            itemDark.setTitle("Malinaw na tema");
-            itemDark.setIconTintList(ContextCompat.getColorStateList(this, R.color.white));
-            itemAbout.setIconTintList(ContextCompat.getColorStateList(this, R.color.white));
-            itemFavorites.setIconTintList(ContextCompat.getColorStateList(this, R.color.white));
-            itemHistory.setIconTintList(ContextCompat.getColorStateList(this, R.color.white));
+
+            if (prefs.loadLanguageState().equals("en")) {
+                itemDark.setTitle("Light Mode");
+            } else {
+                itemDark.setTitle("Malinaw na tema");
+            }
+            ColorStateList iconTint = ContextCompat.getColorStateList(this, R.color.white);
+            itemLanguage.setIconTintList(iconTint);
+            itemDark.setIconTintList(iconTint);
+            itemAbout.setIconTintList(iconTint);
+            itemFavorites.setIconTintList(iconTint);
+            itemHistory.setIconTintList(iconTint);
         }
         return true;
     }
+    @SuppressLint("NonConstantResourceId")
     @RequiresApi(api = Build.VERSION_CODES.O)
     @Override
     public boolean onOptionsItemSelected(MenuItem item) {
         // Handle item selection
+
         switch (item.getItemId()) {
             case R.id.darkMode:
                 prefs.setNightModeState(!prefs.loadNightModeState());
                 restartApp();
                 return true;
+            case R.id.changeLanguage:
+                if (item.getTitle().toString().equals("Paltan sa Wikang Ingles")){
+                    ChangeLanguage("en");
+                    prefs.setLanguageLaunch("en");
+                } else {
+                    ChangeLanguage("fil");
+                    prefs.setLanguageLaunch("fil");
+                }
+                restartApp();
+                return true;
             case R.id.favorites:
             case R.id.history:
-            case R.id.about:
                 Toast.makeText(this, item.getTitle(), Toast.LENGTH_SHORT).show();
+                return true;
+            case R.id.about:
+                showPopupAbout(item.getActionView());
                 return true;
             default:
                 return super.onOptionsItemSelected(item);
         }
+    }
+
+    private void ChangeLanguage(String Lang){
+        Locale locale = new Locale(Lang);
+        Locale.setDefault(locale);
+        Configuration config = new Configuration();
+        if (Lang.equals("en")){
+            config.locale = locale;
+            Objects.requireNonNull(getSupportActionBar()).setTitle("English - Filipino Translator");
+        } else {
+            config.locale = Locale.getDefault();
+            Objects.requireNonNull(getSupportActionBar()).setTitle("Filipino - Ingles Tagasalin");
+        }
+        getBaseContext().getResources().updateConfiguration(config, getBaseContext().getResources().getDisplayMetrics());
     }
 
     private void restartApp(){
@@ -326,8 +382,14 @@ public class MainActivity extends AppCompatActivity {
         else {
             Intent speechRecognizerIntent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
             speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fil_PH");
-            speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Magsalita sa Filipino");
+            if (prefs.loadLanguageState().equals("en")) {
+                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, Locale.ENGLISH);
+                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Speak to text");
+            } else {
+                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "fil_PH");
+                speechRecognizerIntent.putExtra(RecognizerIntent.EXTRA_PROMPT, "Magsalita sa Filipino");
+            }
+
             try {
                 startActivityForResult(speechRecognizerIntent, RecordAudioRequestCode);
             }
@@ -346,15 +408,18 @@ public class MainActivity extends AppCompatActivity {
                         RecognizerIntent.EXTRA_RESULTS);
                 editTextInputFilipino.setText(
                         Objects.requireNonNull(result).get(0));
-                translate_tagalog(Objects.requireNonNull(result).get(0));
+
+                if (prefs.loadLanguageState().equals("en")) {
+                    translate_english(Objects.requireNonNull(result).get(0));
+                } else {
+                    translate_tagalog(Objects.requireNonNull(result).get(0));
+                }
             }
         }
     }
 
     private void checkPermission() {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.M) {
-            ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.RECORD_AUDIO},RecordAudioRequestCode);
-        }
+        ActivityCompat.requestPermissions(this,new String[]{Manifest.permission.RECORD_AUDIO},RecordAudioRequestCode);
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
@@ -425,6 +490,56 @@ public class MainActivity extends AppCompatActivity {
             }
         });
     }
+    public void showPopupAbout(final View view) {
+        LayoutInflater inflater = (LayoutInflater) view.getContext().getSystemService(Context.LAYOUT_INFLATER_SERVICE);
+        View popupView = inflater.inflate(R.layout.popup_about, null);
+
+        //Specify the length and width through constants
+        int width = LinearLayout.LayoutParams.MATCH_PARENT;
+        int height = LinearLayout.LayoutParams.WRAP_CONTENT;
+
+        //Create a window with our parameters
+        final PopupWindow popupWindow = new PopupWindow(popupView, width, height, true);
+
+        //Set the location of the window on the screen
+        popupWindow.showAtLocation(view, Gravity.CENTER, 0, 0);
+        popupWindow.setOutsideTouchable(true);
+        popupWindow.setFocusable(true);
+        popupWindow.setBackgroundDrawable(new BitmapDrawable());
+
+        TextView tvVersion, tvTitle, tvDescription;
+        tvVersion = popupView.findViewById(R.id.tv_Version);
+        tvTitle = popupView.findViewById(R.id.tvAbout);
+        tvDescription = popupView.findViewById(R.id.textViewDescription);
+        com.google.android.material.floatingactionbutton.FloatingActionButton btnShare, btnLink, btnDev;
+        btnDev = popupView.findViewById(R.id.btn_Dev);
+        btnLink = popupView.findViewById(R.id.btn_Link);
+        btnShare = popupView.findViewById(R.id.btn_Share);
+        String version = "Version: "+BuildConfig.VERSION_NAME;
+        tvVersion.setText(version);
+
+        if (prefs.loadNightModeState()) {
+            tvTitle.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white_smoke)));
+            tvDescription.setTextColor(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white_smoke)));
+            btnDev.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_blue)));
+            btnDev.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white_smoke)));
+            btnLink.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_blue)));
+            btnLink.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white_smoke)));
+            btnShare.setBackgroundTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.dark_blue)));
+            btnShare.setImageTintList(ColorStateList.valueOf(ContextCompat.getColor(this, R.color.white_smoke)));
+        }
+
+        btnDev.setOnClickListener(view1 -> {
+            Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse("https://albertzz.vercel.app/"));
+            startActivity(browser);
+        });
+        btnLink.setOnClickListener(view1 -> {
+            Intent browser = new Intent(Intent.ACTION_VIEW, Uri.parse("https://filengtranslator.carrd.co/"));
+            startActivity(browser);
+        });
+        btnShare.setOnClickListener(view1 -> shareApplication());
+    }
+
     private final ActivityResultLauncher<Intent> galleryActivityResultLauncher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
         @Override
         public void onActivityResult(ActivityResult result) {
@@ -478,22 +593,79 @@ public class MainActivity extends AppCompatActivity {
         }
     });
 
+    private void shareApplication() {
+        ApplicationInfo app = getApplicationContext().getApplicationInfo();
+        String filePath = app.sourceDir;
+
+        Intent intent = new Intent(Intent.ACTION_SEND);
+
+        // MIME of .apk is "application/vnd.android.package-archive".
+        // but Bluetooth does not accept this. Let's use "*/*" instead.
+        intent.setType("*/*");
+
+        // Append file and send Intent
+        File originalApk = new File(filePath);
+
+        try {
+            //Make new directory in new location
+            File tempFile = new File(getExternalCacheDir() + "/ExtractedApk");
+            //If directory doesn't exists create new
+            if (!tempFile.isDirectory())
+                if (!tempFile.mkdirs())
+                    return;
+            //Get application's name and convert to lowercase
+            tempFile = new File(tempFile.getPath() + "/" + getString(app.labelRes).replace(" ", "").toLowerCase() + "_v" + BuildConfig.VERSION_NAME + ".apk");
+            //If file doesn't exists create new
+            if (!tempFile.exists()) {
+                if (!tempFile.createNewFile()) {
+                    return;
+                }
+            }
+            //Copy file to new location
+            InputStream in = new FileInputStream(originalApk);
+            OutputStream out = new FileOutputStream(tempFile);
+
+            byte[] buf = new byte[1024];
+            int len;
+            while ((len = in.read(buf)) > 0) {
+                out.write(buf, 0, len);
+            }
+            in.close();
+            out.close();
+            System.out.println("File copied.");
+            Uri photoURI = FileProvider.getUriForFile(Objects.requireNonNull(getApplicationContext()),
+                    BuildConfig.APPLICATION_ID + ".provider", tempFile);
+            intent.putExtra(Intent.EXTRA_STREAM, photoURI);
+            startActivity(Intent.createChooser(intent, "Share app via"));
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     private static long back_pressed;
     @Override
     public void onBackPressed() {
         if (back_pressed + 2000 > System.currentTimeMillis()){
             overridePendingTransition(0, 0);
             finishAffinity();
+            System.exit(0);
             super.onBackPressed();
         }
-        else Toast.makeText(getBaseContext(), "Press once again to exit!", Toast.LENGTH_SHORT).show();
+        else
+        if (prefs.loadLanguageState().equals("en")) {
+            Toast.makeText(getBaseContext(), "Press once again to exit!", Toast.LENGTH_SHORT).show();
+        } else {
+            Toast.makeText(getBaseContext(), "Pindutin muli para lumabas!", Toast.LENGTH_SHORT).show();
+        }
+
         back_pressed = System.currentTimeMillis();
     }
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        if (loadingData!=null){
-            loadingData.DismissDialog();
+        if (loadingDataActivity !=null){
+            loadingDataActivity.DismissDialog();
         }
         Runtime.getRuntime().gc();
     }

@@ -6,11 +6,11 @@ import android.view.LayoutInflater;
 
 import androidx.appcompat.app.AlertDialog;
 
-public class LoadingData {
+public class LoadingDataActivity {
     private final Activity activity;
     private AlertDialog alertDialog;
 
-    LoadingData(Activity myActivity)
+    LoadingDataActivity(Activity myActivity)
     {
         activity= myActivity;
     }

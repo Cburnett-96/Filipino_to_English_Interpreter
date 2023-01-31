@@ -1,4 +1,4 @@
-package com.orbotz.filipino_english_interpreter;
+package com.orbotz.filipino_english_interpreter.Services;
 
 import android.content.Context;
 import android.content.SharedPreferences;
@@ -19,9 +19,9 @@ public class SharedPref {
         editor.putBoolean("FirstTime", state);
         editor.apply();
     }
-    public void setDataLaunch(Boolean state) {
+    public void setLanguageLaunch(String lang) {
         SharedPreferences.Editor editor = mySharedPref.edit();
-        editor.putBoolean("Data", state);
+        editor.putString("Language", lang);
         editor.apply();
     }
     // this method will load the Night Mode State
@@ -33,8 +33,8 @@ public class SharedPref {
         Boolean state = mySharedPref.getBoolean("FirstTime",false);
         return  state;
     }
-    public Boolean loadDataState (){
-        Boolean state = mySharedPref.getBoolean("Data",false);
+    public String loadLanguageState (){
+        String state = mySharedPref.getString("Language", "");
         return  state;
     }
 }

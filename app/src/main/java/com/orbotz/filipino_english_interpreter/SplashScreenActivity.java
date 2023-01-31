@@ -15,6 +15,8 @@ import android.view.Window;
 import android.view.WindowManager;
 import android.widget.TextView;
 
+import com.orbotz.filipino_english_interpreter.Services.SharedPref;
+
 import java.util.Objects;
 
 public class SplashScreenActivity extends AppCompatActivity {

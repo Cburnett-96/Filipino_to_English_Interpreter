@@ -4,6 +4,11 @@
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".MainActivity">
     <item
+        android:id="@+id/changeLanguage"
+        android:icon="@drawable/ic_language"
+        android:title="@string/paltan_sa_wikang_ingles"
+        app:iconTint="@color/black" />
+    <item
         android:id="@+id/darkMode"
         android:icon="@drawable/ic_dark"
         android:title="@string/dark_mode"
@@ -12,15 +17,18 @@
         android:id="@+id/favorites"
         android:icon="@drawable/ic_star"
         android:title="@string/favorites"
-        app:iconTint="@color/black" />
+        app:iconTint="@color/black"
+        app:actionViewClass="android.widget.Button"/>
     <item
         android:id="@+id/history"
         android:icon="@drawable/ic_history"
         android:title="@string/history"
-        app:iconTint="@color/black" />
+        app:iconTint="@color/black"
+        app:actionViewClass="android.widget.Button"/>
     <item
         android:id="@+id/about"
         android:icon="@drawable/ic_info"
         android:title="@string/about"
-        app:iconTint="@color/black" />
+        app:iconTint="@color/black"
+        app:actionViewClass="android.widget.Button" />
 </menu>

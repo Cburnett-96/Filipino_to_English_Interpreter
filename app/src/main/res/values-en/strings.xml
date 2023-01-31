@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">Filipino - English Translator</string>
+
+    <string name="favorites">Favorites</string>
+    <string name="dark_mode">Dark Mode</string>
+    <string name="history">History</string>
+    <string name="about">About</string>
+    <string name="tap_to_enter_text">Tap To Enter Text</string>
+    <string name="english_translated">Translated Result</string>
+    <string name="naglo_load_ang_datos_ng_tagasalin">Loading Data..</string>
+    <string name="paltan_sa_wikang_ingles">Change To Filipino</string>
+    <string name="descriptions">An android app which will allows you to translate Filipino (Tagalog) to English vise-versa with material design.</string>
+</resources>
